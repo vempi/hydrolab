@@ -27,14 +27,14 @@ export default function SearchScreen() {
 
     const usenavigate = useNavigate();
 
-    const handleSelectId = (d: DataInterface) => {
+    const handleSelectId = async (d: DataInterface) => {
         usenavigate(`/content`);
         setTempMainData(d);
-        const foundedDetailData: PairingStationData | null = getPairingStatisticalDataByID(d.Station_ID.toString());
-        setTempDetailData(foundedDetailData)
+        const foundedDetailData: PairingStationData | null = await getPairingStatisticalDataByID(d.Station_ID.toString());
+        setTempDetailData(foundedDetailData);
     }
 
-    function handleSearch() {
+    async function handleSearch() {
         if (!lat || !long || !range) {
             return;
         }
@@ -47,8 +47,8 @@ export default function SearchScreen() {
             return;
         }
 
-        const data: MetaDataInterface[] = searchNearest(parsedLat, parsedLong, parsedRange / 1000)
-        setSearchData(data)
+        const data: MetaDataInterface[] = await searchNearest(parsedLat, parsedLong, parsedRange / 1000);
+        setSearchData(data);
         console.log("Search center:", parsedLat, parsedLong, parsedRange / 1000);
     }
 

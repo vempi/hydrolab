@@ -12,28 +12,37 @@ import React from "react";
 import { DataContext } from "../context-provider/data-context";
 import { getPaginatedData, getPairingStatisticalDataByID, searchNearest } from "../lib/dataService";
 import type { DataInterface } from "../types/data-store-type";
-import type { MetaDataInterface, PairingStationData } from "../assets/data/data-types";
+import type { MetaDataInterface } from "../assets/data/data-types";
 
 export default function DataShowScreen() {
     const usenavigate = useNavigate();
     const { pagNum, PAGINATION_LIMIT_OFFSET, setTempMainData, setTempDetailData, setSelectedLat, setSelectedLon } = React.useContext(DataContext);
-    const { data } = getPaginatedData(Math.max(pagNum, 1), PAGINATION_LIMIT_OFFSET);
 
-    const handleSelectId = (d: DataInterface) => {
+    const [data, setData] = React.useState<MetaDataInterface[]>([]);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        setLoading(true);
+        getPaginatedData(Math.max(pagNum, 1), PAGINATION_LIMIT_OFFSET)
+            .then(res => setData(res.data))
+            .finally(() => setLoading(false));
+    }, [pagNum, PAGINATION_LIMIT_OFFSET]);
+
+    const handleSelectId = async (d: DataInterface) => {
         usenavigate(`/content`);
         setTempMainData(d);
-        const foundedDetailData: PairingStationData | null = getPairingStatisticalDataByID(d.Station_ID.toString());
-        setTempDetailData(foundedDetailData)
+        const foundedDetailData = await getPairingStatisticalDataByID(d.Station_ID.toString());
+        setTempDetailData(foundedDetailData);
     }
 
     const [lat, setLat] = React.useState<string>("")
     const [long, setLong] = React.useState<string>("")
 
-    const handleSearchData = (lat: number, long: number) => {
-        setSelectedLat(lat)
-        setSelectedLon(long)
-        const data: MetaDataInterface[] = searchNearest(lat, long)
-        console.log(data)
+    const handleSearchData = async (lat: number, long: number) => {
+        setSelectedLat(lat);
+        setSelectedLon(long);
+        const data = await searchNearest(lat, long);
+        console.log(data);
         usenavigate(`/search`);
     }
 
@@ -86,17 +95,23 @@ export default function DataShowScreen() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {data.map((d, idx) => (
-                                    <TableRow key={idx}>
-                                        <TableCell onClick={() => handleSelectId(d)} className="w-10 text-sm text-center hover:underline cursor-pointer">{d.Station_ID}</TableCell>
-                                        <TableCell className="text-start w-24 text-sm">{d.Station_Name}</TableCell>
-                                        <TableCell className="text-center w-28 text-sm">{d.File_Created}</TableCell>
-                                        <TableCell className="text-center w-28 text-sm">{d.Years_Covered}</TableCell>
-                                        <TableCell className="text-center w-24 text-sm">{d.Elevation}</TableCell>
-                                        <TableCell className="text-center w-28 text-sm">{d.latitude}</TableCell>
-                                        <TableCell className="text-center w-28 text-sm">{d.longitude}</TableCell>
+                                {loading ? (
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="text-center text-gray-400 py-8">Memuat data...</TableCell>
                                     </TableRow>
-                                ))}
+                                ) : (
+                                    data.map((d, idx) => (
+                                        <TableRow key={idx}>
+                                            <TableCell onClick={() => handleSelectId(d)} className="w-10 text-sm text-center hover:underline cursor-pointer">{d.Station_ID}</TableCell>
+                                            <TableCell className="text-start w-24 text-sm">{d.Station_Name}</TableCell>
+                                            <TableCell className="text-center w-28 text-sm">{d.File_Created}</TableCell>
+                                            <TableCell className="text-center w-28 text-sm">{d.Years_Covered}</TableCell>
+                                            <TableCell className="text-center w-24 text-sm">{d.Elevation}</TableCell>
+                                            <TableCell className="text-center w-28 text-sm">{d.latitude}</TableCell>
+                                            <TableCell className="text-center w-28 text-sm">{d.longitude}</TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
                             </TableBody>
                         </Table>
                     </div>

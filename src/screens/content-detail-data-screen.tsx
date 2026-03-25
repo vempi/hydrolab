@@ -23,7 +23,7 @@ function buildChartData(
 export default function ContentDetailDataScreen() {
   const { tempMainData, tempDetailData } = React.useContext(DataContext)
 
-  const years = constantPairingStatisticalRawYearData
+  const years = constantPairingStatisticalRawYearData()
   const values = tempDetailData?.data ?? []
   const chartData = buildChartData(years, values);
 

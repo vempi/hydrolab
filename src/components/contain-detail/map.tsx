@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React from "react";
 
 import maplibregl from "maplibre-gl";
@@ -10,6 +11,8 @@ export default function Map(
     const mapContainerRef = React.useRef<HTMLDivElement | null>(null);
     const mapRef = React.useRef<maplibregl.Map | null>(null);
 
+    const mapKey = import.meta.env.VITE_PUBLIC_TOKEN_MAP || "rJesvYzd1J4oIcT9N4sA"
+
     React.useEffect(() => {
         if (!mapRef.current && !mapContainerRef.current) {
             return;
@@ -17,7 +20,7 @@ export default function Map(
 
         const map = new maplibregl.Map({
             container: mapContainerRef.current ?? '',
-            style: `https://api.maptiler.com/maps/satellite/style.json?key=${import.meta.env.VITE_PUBLIC_TOKEN_MAP}`,
+            style: `https://api.maptiler.com/maps/satellite/style.json?key=${mapKey}`,
             center: [centralPoint.lon, centralPoint.lat],
             zoom: zoomLevel,
             attributionControl: false,

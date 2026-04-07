@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const baseURL_API = import.meta.env.VITE_PUBLIC_BASE_API_URL || "https://hydrolab-backend-system.vercel.app"
+
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_PUBLIC_BASE_API_URL
+    baseURL: baseURL_API
 })
 
 export function ErrorHandler(status: number | undefined, defaulterr: string | undefined): string {

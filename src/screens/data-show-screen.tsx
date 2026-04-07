@@ -10,41 +10,71 @@ import {
 import Pagination from "../components/data-show/pagination";
 import React from "react";
 import { DataContext } from "../context-provider/data-context";
-import { getPaginatedData, getPairingStatisticalDataByID, searchNearest } from "../lib/dataService";
 import type { DataInterface } from "../types/data-store-type";
-import type { MetaDataInterface } from "../assets/data/data-types";
+import type { PairingStationData, StatisticalData } from "../assets/data/data-types";
+import type { APIGetPaginationInterface, APIGetPairingDataInterface } from "../types/connection-type";
+import { execvFetchFunc, useFetchData } from "../lib/useConnection";
+import LoadingComponent from "../components/loading-component";
 
 export default function DataShowScreen() {
     const usenavigate = useNavigate();
-    const { pagNum, PAGINATION_LIMIT_OFFSET, setTempMainData, setTempDetailData, setSelectedLat, setSelectedLon } = React.useContext(DataContext);
-
-    const [data, setData] = React.useState<MetaDataInterface[]>([]);
-    const [loading, setLoading] = React.useState(true);
-
-    React.useEffect(() => {
-        setLoading(true);
-        getPaginatedData(Math.max(pagNum, 1), PAGINATION_LIMIT_OFFSET)
-            .then(res => setData(res.data))
-            .finally(() => setLoading(false));
-    }, [pagNum, PAGINATION_LIMIT_OFFSET]);
+    const { pagNum, PAGINATION_LIMIT_OFFSET, setTempMainData, setTempDetailData, setTempStatisticalData, setSelectedLat, setSelectedLon } = React.useContext(DataContext);
+    const page = Math.max(pagNum, 1)
+    const { data, isLoading } = useFetchData<APIGetPaginationInterface>(`/online-data/data/paginated?page=${page}&limit=${PAGINATION_LIMIT_OFFSET}`)
 
     const handleSelectId = async (d: DataInterface) => {
-        usenavigate(`/content`);
         setTempMainData(d);
-        const foundedDetailData = await getPairingStatisticalDataByID(d.Station_ID.toString());
+
+        // [TODO: TIDY UP THIS ALEX PLEASE]
+        const result = await execvFetchFunc<APIGetPairingDataInterface>(`/online-data/pairing/${d.Station_ID.toString()}`);
+
+        if (!result) {
+            return;
+        }
+
+        if (typeof result === "string" || "error" in result) {
+            console.error(typeof result === "string" ? result : (result as Record<string, unknown>).message || result);
+            return;
+        }
+
+        const foundedDetailData: PairingStationData = {
+            station_name: result.station_name,
+            data: result.data,
+        };
+
         setTempDetailData(foundedDetailData);
-    }
+
+        const resultStat = await execvFetchFunc<StatisticalData>(`/online-data/statistical/${d.Station_ID.toString()}`);
+
+        if (!resultStat) {
+            return;
+        }
+
+        if (typeof resultStat === "string" || "error" in result) {
+            console.error(typeof result === "string" ? result : (resultStat as unknown as Record<string, unknown>).message || result);
+            return;
+        }
+
+        const foundedStatData: StatisticalData = resultStat;
+
+        setTempStatisticalData(foundedStatData)
+
+        // [TODO: TIDY UP THIS ALEX PLEASE]
+
+        usenavigate(`/content`);;
+    };
 
     const [lat, setLat] = React.useState<string>("")
     const [long, setLong] = React.useState<string>("")
 
-    const handleSearchData = async (lat: number, long: number) => {
-        setSelectedLat(lat);
-        setSelectedLon(long);
-        const data = await searchNearest(lat, long);
-        console.log(data);
+    const handleSearchData = (lat: number, long: number) => {
+        setSelectedLat(lat)
+        setSelectedLon(long)
         usenavigate(`/search`);
     }
+
+    if (isLoading) return <LoadingComponent />
+
 
     return (
         <div className="space-y-12">
@@ -95,17 +125,17 @@ export default function DataShowScreen() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {loading ? (
+                                {isLoading ? (
                                     <TableRow>
                                         <TableCell colSpan={7} className="text-center text-gray-400 py-8">Memuat data...</TableCell>
                                     </TableRow>
                                 ) : (
-                                    data.map((d, idx) => (
+                                    data?.data.map((d, idx) => (
                                         <TableRow key={idx}>
                                             <TableCell onClick={() => handleSelectId(d)} className="w-10 text-sm text-center hover:underline cursor-pointer">{d.Station_ID}</TableCell>
                                             <TableCell className="text-start w-24 text-sm">{d.Station_Name}</TableCell>
-                                            <TableCell className="text-center w-28 text-sm">{d.File_Created}</TableCell>
-                                            <TableCell className="text-center w-28 text-sm">{d.Years_Covered}</TableCell>
+                                            <TableCell className="text-center w-28 text-sm">{d.File_Updated}</TableCell>
+                                            <TableCell className="text-center w-28 text-sm">{d['Tahun Mulai'] + "-" + d["Tahun Akhir"]}</TableCell>
                                             <TableCell className="text-center w-24 text-sm">{d.Elevation}</TableCell>
                                             <TableCell className="text-center w-28 text-sm">{d.latitude}</TableCell>
                                             <TableCell className="text-center w-28 text-sm">{d.longitude}</TableCell>

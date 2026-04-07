@@ -1,6 +1,7 @@
 import React from "react";
-import { DataContext, STORAGE_KEY_CONTENT_DATA, STORAGE_KEY_LAT_DATA, STORAGE_KEY_LON_DATA, STORAGE_KEY_MAIN_DATA, STORAGE_KEY_PAG_NUM } from "./data-context";
+import { DataContext, STORAGE_KEY_CONTENT_DATA, STORAGE_KEY_LAT_DATA, STORAGE_KEY_LON_DATA, STORAGE_KEY_MAIN_DATA, STORAGE_KEY_PAG_NUM, STORAGE_KEY_PURE_STATISTICAL_DATA } from "./data-context";
 import type { DataContentInterface, DataInterface } from "../types/data-store-type";
+import type { StatisticalData } from "../assets/data/data-types";
 
 export default function DataContextProvider({ children }: { children: React.ReactNode }) {
     const [pagNum, setPagNum] = React.useState<number>(() => {
@@ -43,6 +44,16 @@ export default function DataContextProvider({ children }: { children: React.Reac
         }
     });
 
+    const [pureStatData, setPureStatData] = React.useState<StatisticalData | null>(() => {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY_PURE_STATISTICAL_DATA);
+            return stored ? JSON.parse(stored) : null;
+        } catch (error) {
+            console.error('Error loading from localStorage:', error);
+            return null;
+        }
+    });
+
     const [statisticData, setStatisticData] = React.useState<DataContentInterface | null>(() => {
         try {
             const stored = localStorage.getItem(STORAGE_KEY_CONTENT_DATA);
@@ -60,6 +71,19 @@ export default function DataContextProvider({ children }: { children: React.Reac
                 localStorage.removeItem(STORAGE_KEY_MAIN_DATA);
             } else {
                 localStorage.setItem(STORAGE_KEY_MAIN_DATA, JSON.stringify(data));
+            }
+        } catch (error) {
+            console.error('Error saving to localStorage:', error);
+        }
+    }, []);
+
+    const setPureStat = React.useCallback((data: StatisticalData | null) => {
+        setPureStatData(data);
+        try {
+            if (data === null) {
+                localStorage.removeItem(STORAGE_KEY_PURE_STATISTICAL_DATA);
+            } else {
+                localStorage.setItem(STORAGE_KEY_PURE_STATISTICAL_DATA, JSON.stringify(data));
             }
         } catch (error) {
             console.error('Error saving to localStorage:', error);
@@ -126,8 +150,10 @@ export default function DataContextProvider({ children }: { children: React.Reac
             setSelectedLon: setSelectedLon,
 
             tempMainData: selectedData,
+            tempStatisticalData: pureStatData,
             tempDetailData: statisticData,
             setTempMainData: setTempMainData,
+            setTempStatisticalData: setPureStat,
             setTempDetailData: setTempDetailData,
 
             pagNum: pagNum,

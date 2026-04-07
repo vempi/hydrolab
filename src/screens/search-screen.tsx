@@ -1,7 +1,6 @@
 import React from "react";
 import { DataContext } from "../context-provider/data-context";
 import type { MetaDataInterface, PairingStationData } from "../assets/data/data-types";
-import { getPairingStatisticalDataByID, searchNearest } from "../lib/dataService";
 import SearchMap from "../components/contain-detail/search-map";
 
 import { useNavigate } from "react-router-dom";
@@ -15,6 +14,8 @@ import {
     TableRow
 } from "../components/data-show/table";
 import type { DataInterface } from "../types/data-store-type";
+import { execvFetchFunc } from "../lib/useConnection";
+import type { APIGetPairingDataInterface } from "../types/connection-type";
 
 export default function SearchScreen() {
     const { selectedLon, selectedLat, setTempMainData, setTempDetailData, } = React.useContext(DataContext);
@@ -28,11 +29,30 @@ export default function SearchScreen() {
     const usenavigate = useNavigate();
 
     const handleSelectId = async (d: DataInterface) => {
-        usenavigate(`/content`);
-        setTempMainData(d);
-        const foundedDetailData: PairingStationData | null = await getPairingStatisticalDataByID(d.Station_ID.toString());
-        setTempDetailData(foundedDetailData);
-    }
+            setTempMainData(d);
+            
+            // [TODO: TIDY UP THIS ALEX PLEASE]
+            const result = await execvFetchFunc<APIGetPairingDataInterface>(`/online-data/pairing/${d.Station_ID.toString()}`);
+            
+            if (!result) {
+                return;
+            }
+    
+            if (typeof result === "string" || "error" in result) {
+                console.error(typeof result === "string" ? result : (result as Record<string, unknown>).message || result);
+                return;
+            }
+            
+            const foundedDetailData : PairingStationData = {
+                station_name: result.station_name,
+                data: result.data,
+            };
+            
+            setTempDetailData(foundedDetailData);;
+            // [TODO: TIDY UP THIS ALEX PLEASE]
+            
+            usenavigate(`/content`);
+        };
 
     async function handleSearch() {
         if (!lat || !long || !range) {
@@ -47,9 +67,21 @@ export default function SearchScreen() {
             return;
         }
 
-        const data: MetaDataInterface[] = await searchNearest(parsedLat, parsedLong, parsedRange / 1000);
-        setSearchData(data);
-        console.log("Search center:", parsedLat, parsedLong, parsedRange / 1000);
+        const result = await execvFetchFunc<MetaDataInterface[]>(`/online-data/search?lat=${parsedLat}&lon=${parsedLong}&radius=${parsedRange / 1000}`);
+
+        let data: MetaDataInterface[] = [];
+
+        if (!result) {
+            return;
+        }
+
+        if (typeof result === "string" || "error" in result) {
+            console.error(typeof result === "string" ? result : (result as Record<string, unknown>).message || result);
+            return;
+        }
+
+        data = result
+        setSearchData(data)
     }
 
     if (
@@ -176,8 +208,8 @@ export default function SearchScreen() {
                                 <TableRow key={idx}>
                                     <TableCell onClick={() => handleSelectId(d)} className="w-10 text-sm text-center hover:underline cursor-pointer">{d.Station_ID}</TableCell>
                                     <TableCell className="text-start w-24 text-sm">{d.Station_Name}</TableCell>
-                                    <TableCell className="text-center w-28 text-sm">{d.File_Created}</TableCell>
-                                    <TableCell className="text-center w-28 text-sm">{d.Years_Covered}</TableCell>
+                                    <TableCell className="text-center w-28 text-sm">{d.File_Updated}</TableCell>
+                                    <TableCell className="text-center w-28 text-sm">{d['Tahun Mulai'] + "-" + d["Tahun Akhir"]}</TableCell>
                                     <TableCell className="text-center w-24 text-sm">{d.Elevation}</TableCell>
                                     <TableCell className="text-center w-28 text-sm">{d.latitude}</TableCell>
                                     <TableCell className="text-center w-28 text-sm">{d.longitude}</TableCell>

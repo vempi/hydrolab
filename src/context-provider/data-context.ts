@@ -1,8 +1,9 @@
 import { createContext } from "react";
-import type { DataContentInterface, DataInterface } from "../types/data-store-type";
+import type { DataContentInterface, DataInterface, StatisticalDataInterface } from "../types/data-store-type";
 
 export const STORAGE_KEY_MAIN_DATA = "main-data";
 export const STORAGE_KEY_CONTENT_DATA = "content-data";
+export const STORAGE_KEY_PURE_STATISTICAL_DATA = "stat-data";
 export const STORAGE_KEY_LAT_DATA = "lat-data";
 export const STORAGE_KEY_LON_DATA = "lon-data";
 export const STORAGE_KEY_PAG_NUM = "pag-num";
@@ -15,8 +16,10 @@ export type DataContextType = {
     setSelectedLon: (d: number | null) => void;
 
     tempMainData: DataInterface | null;
+    tempStatisticalData: StatisticalDataInterface | null;
     tempDetailData: DataContentInterface | null;
     setTempMainData: (d: DataInterface | null) => void;
+    setTempStatisticalData: (d: StatisticalDataInterface | null) => void;
     setTempDetailData: (d: DataContentInterface | null) => void;
 
     pagNum: number;
@@ -33,8 +36,10 @@ export const DataContext = createContext<DataContextType>({
     setSelectedLon: () => {},
 
     tempMainData: null,
+    tempStatisticalData: null,
     tempDetailData: null,
     setTempMainData: () => {},
+    setTempStatisticalData: () => {},
     setTempDetailData: () => {},
 
     pagNum: 1,

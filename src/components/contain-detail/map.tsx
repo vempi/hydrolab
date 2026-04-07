@@ -12,7 +12,6 @@ export default function Map(
 
     React.useEffect(() => {
         if (!mapRef.current && !mapContainerRef.current) {
-            console.log("map current sama map container ref udah ke load jadi skip ini semua bos")
             return;
         };
 

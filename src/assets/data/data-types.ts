@@ -2,19 +2,33 @@ export interface MetaDataInterface {
   Station_ID: number;
   Station_Name: string;
   Elevation: number;
-  File_Created: string;
+  File_Updated: string;
   Data_Points: number;
   Years_Covered: string;
-  Records: number;
-  Start_Year: number;
-  End_Year: number;
+  "Data Tersedia"?: number;
+  "Tahun Mulai"?: number;
+  "Tahun Akhir"?: number;
   Annual_Mean: number;
   Annual_Max: number;
-  Missing_Values: number;
+  "Data Hilang"?: number;
   LAT: number;
   LON: number;
   latitude: number;
   longitude: number;
+}
+
+export interface StatisticalData {
+  Station_ID: number;
+  _id: string;
+  max: number;
+  mean: number;
+  median: number;
+  min: number;
+  pmp_evt: number;
+  pmp_hers: number;
+  pmp_wmo: number;
+  sample_size: number;
+  std: number;
 }
 
 export interface PairingStationData {

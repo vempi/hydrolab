@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from "react";
 import { DataContext } from "../context-provider/data-context";
 import type { MetaDataInterface, PairingStationData } from "../assets/data/data-types";
@@ -24,35 +25,50 @@ export default function SearchScreen() {
     const [long, setLong] = React.useState<string>(selectedLon?.toString() ?? "");
     const [range, setRange] = React.useState<string>("500");
 
+    const saveSetRange = (value: string) => {
+        if (value === "") {
+            setRange("0");
+            return;
+        }
+
+        if (!/^\d+$/.test(value)) return;
+
+        const num = Number(value);
+
+        if (num > 10000) return;
+
+        setRange(value);
+    };
+
     const [searchData, setSearchData] = React.useState<MetaDataInterface[]>([]);
 
     const usenavigate = useNavigate();
 
     const handleSelectId = async (d: DataInterface) => {
-            setTempMainData(d);
-            
-            // [TODO: TIDY UP THIS ALEX PLEASE]
-            const result = await execvFetchFunc<APIGetPairingDataInterface>(`/online-data/pairing/${d.Station_ID.toString()}`);
-            
-            if (!result) {
-                return;
-            }
-    
-            if (typeof result === "string" || "error" in result) {
-                console.error(typeof result === "string" ? result : (result as Record<string, unknown>).message || result);
-                return;
-            }
-            
-            const foundedDetailData : PairingStationData = {
-                station_name: result.station_name,
-                data: result.data,
-            };
-            
-            setTempDetailData(foundedDetailData);;
-            // [TODO: TIDY UP THIS ALEX PLEASE]
-            
-            usenavigate(`/content`);
+        setTempMainData(d);
+
+        // [TODO: TIDY UP THIS ALEX PLEASE]
+        const result = await execvFetchFunc<APIGetPairingDataInterface>(`/online-data/pairing/${d.Station_ID.toString()}`);
+
+        if (!result) {
+            return;
+        }
+
+        if (typeof result === "string" || "error" in result) {
+            console.error(typeof result === "string" ? result : (result as Record<string, unknown>).message || result);
+            return;
+        }
+
+        const foundedDetailData: PairingStationData = {
+            station_name: result.station_name,
+            data: result.data,
         };
+
+        setTempDetailData(foundedDetailData);;
+        // [TODO: TIDY UP THIS ALEX PLEASE]
+
+        usenavigate(`/content`);
+    };
 
     async function handleSearch() {
         if (!lat || !long || !range) {
@@ -154,7 +170,7 @@ export default function SearchScreen() {
                             <label className="text-sm font-medium">Range (meter)</label>
                             <input
                                 value={range}
-                                onChange={(e) => setRange(e.target.value)}
+                                onChange={(e) => saveSetRange(e.target.value)}
                                 placeholder="max range: 10000 (for now)"
                                 className="w-full mt-1 px-3 py-2 border rounded-md"
                             />
